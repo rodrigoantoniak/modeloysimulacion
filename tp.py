@@ -4,6 +4,7 @@ from math import erfc, sqrt     # No confundir con cmath
 from scipy import stats         # Requiere instalación desde pip
 from tkinter import *           # Requiere instalación desde pip (pytk)
 from tkinter.messagebox import showinfo  # Mensaje emergente
+# Requiere instalación desde pip (PythonTurtle): sirve para graficar
 from turtle import ScrolledCanvas, RawTurtle, TurtleScreen
 
 
@@ -498,6 +499,9 @@ Label(inicio, text="Peso mínimo de vaca", pady=0,
 Label(inicio, text="Peso máximo de vaca", pady=0,
       font=("Arial", 12, "italic")).grid(row=6, column=5, sticky="s",
                                          ipady=0)
+Label(inicio, text="Distancia a recorrer (km)",
+      font=("Arial", 12,
+            "italic")).grid(row=1, column=6, columnspan=2)
 e1 = Entry(inicio, highlightthickness=1,
            highlightbackground="black", highlightcolor="black")
 e2 = Entry(inicio, highlightthickness=1,
@@ -510,12 +514,15 @@ e5 = Entry(inicio, highlightthickness=1,
            highlightbackground="black", highlightcolor="black")
 e6 = Entry(inicio, highlightthickness=1,
            highlightbackground="black", highlightcolor="black")
+e7 = Entry(inicio, highlightthickness=1,
+           highlightbackground="black", highlightcolor="black")
 e1.grid(row=2, column=2, columnspan=2)
 e2.grid(row=2, column=4, columnspan=2)
 e3.grid(row=5, column=2, columnspan=2)
 e4.grid(row=5, column=4, columnspan=2)
 e5.grid(row=7, column=2, columnspan=2, sticky='n')
 e6.grid(row=7, column=4, columnspan=2, sticky='n')
+e7.grid(row=2, column=6, columnspan=2)
 c1 = Label(inicio, text="", font=("Helvetica", 10),
            foreground="#ff0000", padx=0, pady=0)
 c2 = Label(inicio, text="", font=("Helvetica", 10),
@@ -528,12 +535,15 @@ c5 = Label(inicio, text="", font=("Helvetica", 10),
            foreground="#ff0000", padx=0, pady=0)
 c6 = Label(inicio, text="", font=("Helvetica", 10),
            foreground="#ff0000", padx=0, pady=0)
+c7 = Label(inicio, text="", font=("Helvetica", 10),
+           foreground="#ff0000", padx=0, pady=0)
 c1.grid(row=3, column=2, columnspan=2)
 c2.grid(row=3, column=4, columnspan=2)
 c3.grid(row=6, column=2, columnspan=2, sticky="n")
 c4.grid(row=6, column=4, columnspan=2, sticky="n")
 c5.grid(row=7, column=2, columnspan=2, sticky="s")
 c6.grid(row=7, column=4, columnspan=2, sticky="s")
+c7.grid(row=3, column=6, columnspan=2)
 conf = Label(inicio, text="", font=("Verdana", 12),
              foreground="#000000")
 conf.grid(row=9, column=2, columnspan=4, sticky="s")
@@ -542,22 +552,23 @@ res = Label(inicio, text="Peso total de vacas:",
 res.grid(row=9, column=2, columnspan=4, sticky="n")
 Label(inicio, text="Pesos (kg)",
       font=("Unicode", 14,
-            "roman")).grid(row=1, column=6, columnspan=2)
+            "roman")).grid(row=4, column=6, columnspan=2)
 ganado = Frame(inicio)
 barra_dos = Scrollbar(ganado)
-vacas = Listbox(ganado, height=16,
+vacas = Listbox(ganado, height=12,
                 yscrollcommand=barra_dos.set)
 barra_dos.config(command=vacas.yview)
 barra_dos.pack(side="right", expand=True, fill="y")
 vacas.pack(side="left", expand=True, fill="both")
-ganado.grid(row=2, column=6, rowspan=8, columnspan=2)
+ganado.grid(row=5, column=6, rowspan=5, columnspan=2)
 
 
-def calculo(ventana: Tk, dicc: dict, e_sueldo: Entry, c_sueldo: Label,
-            e_marcas: Entry, c_marcas: Label, e_vacas: Entry,
-            c_vacas: Label, e_moda: Entry, c_moda: Label,
-            e_minimo: Entry, c_minimo: Label, e_maximo: Entry,
-            c_maximo: Label, resultado: Label, confianza: Label,
+def calculo(ventana: Tk, dicc: dict[int, Decimal], e_sueldo: Entry,
+            c_sueldo: Label, e_marcas: Entry, c_marcas: Label,
+            e_vacas: Entry, c_vacas: Label, e_moda: Entry,
+            c_moda: Label, e_minimo: Entry, c_minimo: Label,
+            e_maximo: Entry, c_maximo: Label, e_distancia: Entry,
+            c_distancia: Label, resultado: Label, confianza: Label,
             l_vacas: Listbox, /) -> None:
     c_sueldo.config(text="")
     c_marcas.config(text="")
@@ -565,6 +576,7 @@ def calculo(ventana: Tk, dicc: dict, e_sueldo: Entry, c_sueldo: Label,
     c_moda.config(text="")
     c_minimo.config(text="")
     c_maximo.config(text="")
+    c_distancia.config(text="")
     resultado.config(text="Peso total de vacas:")
     confianza.config(text="")
     for widget in ventana.winfo_children():
@@ -577,6 +589,7 @@ def calculo(ventana: Tk, dicc: dict, e_sueldo: Entry, c_sueldo: Label,
     moda: Decimal
     minimo: Decimal
     maximo: Decimal
+    distancia: Decimal
     invalido: bool = False
     s_sueldo: str = e_sueldo.get()
     try:
@@ -632,6 +645,15 @@ def calculo(ventana: Tk, dicc: dict, e_sueldo: Entry, c_sueldo: Label,
     except:
         c_maximo.config(text="No es un número")
         invalido = True
+    s_distancia: str = e_distancia.get()
+    try:
+        distancia = Decimal(s_distancia)
+        if distancia <= 0:
+            c_distancia.config(text="Valor inválido como distancia")
+            invalido = True
+    except:
+        c_distancia.config(text="No es un número")
+        invalido = True
     if dicc == {}:
         showinfo("Cálculo", "Para calcular la cantidad de camiones, "
                  + "primero debe cargar al menos un tipo.")
@@ -680,7 +702,7 @@ def calculo(ventana: Tk, dicc: dict, e_sueldo: Entry, c_sueldo: Label,
                                         height=600)
             salida.title("Gráfico")
             salida.resizable(False, False)
-            Label(salida, text="Datos",
+            Label(salida, text="Resultados",
                   font=("Times New Roman", 20,
                         "bold")).pack(side="top")
             marcador = Frame(salida)
@@ -706,10 +728,38 @@ def calculo(ventana: Tk, dicc: dict, e_sueldo: Entry, c_sueldo: Label,
                   foreground="#000000").grid(row=5, column=0,
                                              columnspan=2)
             Label(marcador, text="Dist. Teórica",
-                  foreground="#0000ff").grid(row=6, column=0,
-                                             columnspan=2)
+                  foreground="#0000ff").grid(row=6, column=0)
             Label(marcador, text="Dist. p/ Marca",
-                  foreground="#ff0000").grid(row=7, column=0,
+                  foreground="#ff0000").grid(row=6, column=1)
+            Label(marcador, text="Eje X: Peso (kg)",
+                  foreground="#000000").grid(row=7, column=0)
+            Label(marcador, text="Eje Y: P(X)",
+                  foreground="#000000").grid(row=7, column=1)
+            tupla: tuple[tuple[int, Decimal], ...] = tuple(dicc.items())
+            cantidad: int
+            precio: Decimal
+            peso: int = tupla[0][0]
+            camiones: int = (Decimal(suma)
+                             + (moda / 2)) // tupla[0][0]
+            ideal: Decimal = camiones * (tupla[0][1] * distancia
+                                         + sueldo)
+            for i in range(1, len(tupla)):
+                cantidad = (Decimal(suma) + (moda / 2)) // tupla[i][0]
+                precio = cantidad * (tupla[i][1] * distancia + sueldo)
+                if precio < ideal:
+                    camiones = cantidad
+                    peso = tupla[i][0]
+                    ideal = precio
+            Label(marcador, text="Tipo de camión ideal: " + str(peso)
+                                 + "kg.",
+                  foreground="#000000").grid(row=8, column=0,
+                                             columnspan=2)
+            Label(marcador, text="Cantidad de camiones: "
+                                 + str(camiones),
+                  foreground="#000000").grid(row=9, column=0,
+                                             columnspan=2)
+            Label(marcador, text="Costo: $" + str(ideal),
+                  foreground="#000000").grid(row=10, column=0,
                                              columnspan=2)
             marcador.pack(side="right")
             for marca in dict_marcas.items():
@@ -720,7 +770,7 @@ def calculo(ventana: Tk, dicc: dict, e_sueldo: Entry, c_sueldo: Label,
                                     + str(marca[1]) + " vacas")
             canvas = ScrolledCanvas(salida, width=600,
                                     height=400)
-            canvas.pack(side="left")
+            canvas.pack(side="bottom")
             pantalla = TurtleScreen(canvas, delay=0)
             pantalla.screensize(canvwidth=600, canvheight=400)
             tortuga = RawTurtle(pantalla, visible=False)
@@ -852,7 +902,8 @@ def calculo(ventana: Tk, dicc: dict, e_sueldo: Entry, c_sueldo: Label,
             # Distribución por marca
             for marca in dict_marcas.items():
                 aux = -270 + ((marca[0] + 0.5) * 540 / cant_marcas)
-                fx = -180 + (marca[1] * cant_marcas * 10 / float(moda))
+                fx = -180 + (marca[1] * cant_marcas * 300
+                             / float(2 * cant_vacas))
                 tortuga.goto(aux, fx)
             tortuga.goto(270, -180)
             tortuga.up()
@@ -868,6 +919,6 @@ calcular = Button(inicio, text="Calcular", background="#eeeeee",
                   foreground="#000000", font=("Unicode", 14, "roman"),
                   command=partial(calculo, inicio, lista, e1, c1, e2,
                                   c2, e3, c3, e4, c4, e5, c5, e6, c6,
-                                  res, conf, vacas))
+                                  e7, c7, res, conf, vacas))
 calcular.grid(row=8, column=3, columnspan=3)
 inicio.mainloop()
